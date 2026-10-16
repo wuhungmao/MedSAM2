@@ -30,7 +30,7 @@ import cv2
 
 
 user_processes = {}
-PROCESS_TIMEOUT = datetime.timedelta(minutes=15)
+PROCESS_TIMEOUT = datetime.timedelta(hours=3)
 
 def reset(seg_tracker):
     if seg_tracker is not None:
@@ -84,13 +84,16 @@ def get_meta_from_video(session_id, input_video, scale_slider, config_path, chec
     first_frame = cv2.imread(first_frame_path)
     first_frame_rgb = cv2.cvtColor(first_frame, cv2.COLOR_BGR2RGB)
 
-    torch.autocast(device_type="cuda", dtype=torch.bfloat16).__enter__()
-    if torch.cuda.get_device_properties(0).major >= 8:
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
-   
-    predictor = build_sam2_video_predictor(config_path, checkpoint_path, device="cuda")
-    sam2_model = build_sam2(config_path, checkpoint_path, device="cuda")
+    # Use CPU because we are not using NVIDIA GPU
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        torch.autocast(device_type="cuda", dtype=torch.bfloat16).__enter__()
+        if torch.cuda.get_device_properties(0).major >= 8:
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
+
+    predictor = build_sam2_video_predictor(config_path, checkpoint_path, device=device)
+    sam2_model = build_sam2(config_path, checkpoint_path, device=device)
     image_predictor = SAM2ImagePredictor(sam2_model)
     inference_state = predictor.init_state(video_path=output_dir)
     predictor.reset_state(inference_state)
