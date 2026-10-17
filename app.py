@@ -31,6 +31,9 @@ import cv2
 
 user_processes = {}
 PROCESS_TIMEOUT = datetime.timedelta(hours=3)
+DEFAULT_CONFIG = "sam2.1_hiera_t512"
+DEFAULT_CHECKPOINT = "MedSAM2_latest"
+DEFAULT_FPS = 1.0
 
 def reset(seg_tracker):
     if seg_tracker is not None:
@@ -490,7 +493,7 @@ def seg_track_app():
         scale_slider = gr.Slider.update(minimum=1.0,
                                     maximum=fps,
                                     step=1.0,
-                                    value=fps,)
+                                    value=DEFAULT_FPS,)
         frame_per = gr.Slider.update(minimum= 0.0,
                                 maximum= total_frames / fps,
                                 step=1.0/fps,
@@ -681,6 +684,8 @@ def seg_track_app():
         splitext(basename(f))[0] for f in checkpoint_files
     ] + medsam_display
     checkpoint_files.extend(medsam_checkpoints)
+    default_config = DEFAULT_CONFIG if DEFAULT_CONFIG in config_display else config_display[0]
+    default_checkpoint = DEFAULT_CHECKPOINT if DEFAULT_CHECKPOINT in checkpoint_display else checkpoint_display[0]
 
     config_file_map = dict(zip(config_display, config_files))
     checkpoint_file_map = dict(zip(checkpoint_display, checkpoint_files))
@@ -692,7 +697,7 @@ def seg_track_app():
         gr.Markdown(
             '''
             <div style="text-align:center; margin-bottom:20px;">
-                <span style="font-size:3em; font-weight:bold;">MedSAM2: Segment Anything in 3D Medical Images and Videos</span>
+                <span style="font-size:3em; font-weight:bold;">Gastric Cancer Detection Segmentation Tool</span>
             </div>
             <div style="text-align:center; margin-bottom:20px;">
                 <a href="https://github.com/bowang-lab/MedSAM/tree/MedSAM2">
@@ -755,13 +760,13 @@ def seg_track_app():
                             # checkpoint = gr.Dropdown(label="Model Size", choices=["tiny", "small", "base-plus", "large"], value="tiny")
                             config_dropdown = gr.Dropdown(
                                 choices=config_display, 
-                                value=config_display[0],
+                                value=default_config,
                                 label="Select Config File"
                             )
 
                             checkpoint_dropdown = gr.Dropdown(
                                 choices=checkpoint_display, 
-                                value=checkpoint_display[0],
+                                value=default_checkpoint,
                                 label="Select Checkpoint File"
                             )
                             scale_slider = gr.Slider(
